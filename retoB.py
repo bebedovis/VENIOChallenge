@@ -44,10 +44,8 @@ def main():
     log_price = np.log(df_weekly["unit_price"].values)
     features = [log_price,weeks.astype(float)]
     # annual expected variance coefficients
-    # 2 harmonics just so it can have a 2 seasonal peaks
-    for k in range(1,3): 
-        features.append(np.sin(2*np.pi*k*weeks/52))
-        features.append(np.cos(2*np.pi*k*weeks/52))
+    # features.append(np.sin(2*np.pi*weeks/52)) jeje only cosine harmonic pass the p-value
+    features.append(np.cos(2*np.pi*weeks/52))
 
     X = sm.add_constant(np.column_stack(features))
     # target 
