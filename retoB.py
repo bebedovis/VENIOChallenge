@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
+from cleanData import load_data
 
 
 def filter_data(df):
@@ -67,8 +68,7 @@ def simulator(model,df_week,nominal_margin):
 
 
 def main():
-    df = pd.read_csv("assets/20260806_prueba_tecnica_dataset.csv", parse_dates=["date"], dayfirst=True)
-    df = filter_data(df)
+    df = load_data()
     df_weekly = aggregate_features_weekly(df)
     df_weekly, sku = select_largest_variance_sku(df_weekly)
     # X values

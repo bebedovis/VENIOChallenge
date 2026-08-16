@@ -5,10 +5,11 @@ from sklearn.linear_model import LinearRegression
 from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Union
+from cleanData import load_data
 
 class Predictor(ABC): 
     def __init__(self, data_path: Path, num_skus = 3) -> None:
-        self.df = self._load_data(data_path)
+        self.df =load_data() 
         self.skus = self._get_top_skus(self.df,num_skus)
         self.skus_week_count = self._get_count_by_week(self.df, self.skus) 
         # averae between 8 and 12 jeje
