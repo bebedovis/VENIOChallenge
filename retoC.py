@@ -5,22 +5,24 @@ from retoB import aggregate_features_weekly
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-def evaluate_promo(model,nominal_margin,df_weekly, promo_mask):
+def evaluate_promo(model,df_weekly, promo_mask):
     weeks = np.arange(len(df_weekly))
     promo_weeks = weeks[promo_mask]
-    features = np.column_stack([promo_weeks,np.cos(2*np.pi*promo_weeks/52)])
+    features = np.column_stack([promo_weeks,np.sin(2*np.pi*promo_weeks/52),np.cos(2*np.pi*promo_weeks/52)])
     y_pred = model.predict(features)
 
     qty_pred=np.exp(y_pred)
 
     actual_qty = df_weekly["quantity"].values[promo_mask]
+
     unit_cost = df_weekly["unit_cost"].values[promo_mask]
+    unit_price = df_weekly["unit_price"].values[promo_mask]
+    bruto_price = df_weekly["bruto_price"].values[promo_mask]
 
-    actual_amount = df_weekly["amount"].values[promo_mask]
-    actual_cost = df_weekly["cost"].values[promo_mask]
 
-    pred_margin = (qty_pred*unit_cost*nominal_margin).sum()
-    actual_margin = (actual_amount-actual_cost).sum()
+    pred_margin = (qty_pred*(bruto_price-unit_cost)).sum()
+    actual_margin = (actual_qty*(unit_price-unit_cost)).sum()
+    print(actual_qty.sum()-qty_pred.sum())
 
     incremented_margin = actual_margin - pred_margin 
     return incremented_margin
@@ -41,20 +43,20 @@ def main():
     weeks = np.array(range(len(df_weekly)))
 
     # I only use one harmonic because of the previous retoB where it seems that theres no statistical evidence for more --> Not a good thing just I am lazy jeje
+    # jjeje changed to 2 harmonics butr got nbot the expected results :c 
     features = np.column_stack(
-        [weeks.astype(float), np.cos(2*np.pi*weeks/52)]
+        [weeks.astype(float),np.sin(2*np.pi*weeks/52), np.cos(2*np.pi*weeks/52)]
     )
 
     model = LinearRegression()
     y = np.log(df_weekly["quantity"].values)
     model.fit(features[~is_promo_week],y[~is_promo_week])
-    nominal_margin = df["product_margin"].iloc[0]
 
     for combo_name in df["combo"].dropna().unique():
         combo_dates = df.loc[df["combo"] ==combo_name,"date"]
         in_range = (dates >= combo_dates.min()) & (dates <= combo_dates.max())
         promo_mask = is_promo_week & in_range
-        incremented_margin= evaluate_promo(model,nominal_margin,df_weekly, promo_mask)
+        incremented_margin= evaluate_promo(model,df_weekly, promo_mask)
         print(f"{combo_name} got an increment in margin of {incremented_margin}") 
 
 
