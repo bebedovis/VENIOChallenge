@@ -32,6 +32,35 @@ def select_largest_variance_sku(weekly_report):
     sku = stats["var_coeff"].idxmax()
     return weekly_report.loc[sku], sku
 
+def simulator(model,df_week):
+    min_price = df_week["unit_price"].min()
+    max_price = df_week["unit_price"].max()
+    last_product_cost = df_week["unit_cost"][-1]
+    last_week = len(df_week)
+    while True:
+        raw = input(f"Choose a number between {min_price:.2f} and {max_price:.2f}, press q for quiting: ")
+        if raw == "q":
+            break
+        try:
+            price = float(raw)
+        except ValueError:
+            print("Please input a number")
+            continue
+        if price<min_price or price>max_price:
+            print("Please select a number inside the prices")
+            continue
+        # same column order as training: [const, log_price, weeks, cos_term]
+        X = np.array([[1.0, np.log(price), last_week, np.cos(2*np.pi*last_week/52)]])
+        y = model.predict(X)
+        quantity = int(np.exp(y[0]))
+        ingreso = round(quantity*price,2)
+        cost = round(quantity*last_product_cost,2)
+        total_revenue = round(ingreso-cost,2)
+        print(f"Expected demand: {quantity} units")
+        print(f"Expected ingreso: {ingreso}")
+        print(f"Expected cost: {cost}")
+        print(f"Expected revenue: {total_revenue}")
+
 
 def main():
     df = pd.read_csv("assets/20260806_prueba_tecnica_dataset.csv", parse_dates=["date"], dayfirst=True)
@@ -54,7 +83,9 @@ def main():
 
     model = sm.OLS(y,X).fit()
     print(model.summary())
+    print("Calculated elasticity:")
     print(model.params[1],model.conf_int()[1])
+    simulator(model,df_weekly)
 
 if __name__ =="__main__":
     main()
