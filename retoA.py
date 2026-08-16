@@ -166,6 +166,8 @@ def main():
 
         chosen_name = min(models, key=lambda name: summaries[name][sku]["avg_wape"])
         chosen_model = models[chosen_name]
+        last_qty = chosen_model.skus_week_count[sku]["week_count"].iloc[-1]
+        print(f"  last observed quantity: {last_qty:.0f}")
         forecast = chosen_model.forecast(sku, chosen_model.n_weeks_future)
         print(f"  -> chosen: {chosen_name}  forecast next {chosen_model.n_weeks_future} weeks: {forecast.round(0)}")
         print()
