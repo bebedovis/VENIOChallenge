@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 
 
 def filter_data(df):
@@ -36,9 +37,26 @@ def main():
     df = pd.read_csv("assets/20260806_prueba_tecnica_dataset.csv", parse_dates=["date"], dayfirst=True)
     df = filter_data(df)
     df_weekly = aggregate_features_weekly(df)
-    weekly_report, sku = select_largest_variance_sku(df_weekly)
-    print(sku)
-    print(weekly_report)
+    df_weekly, sku = select_largest_variance_sku(df_weekly)
+    # X values
+
+    weeks = np.array(range(len(df_weekly)))
+    log_price = np.log(df_weekly["unit_price"].values)
+    features = [log_price,weeks.astype(float)]
+    # annual expected variance coefficients
+    # 2 harmonics just so it can have a 2 seasonal peaks
+    for k in range(1,3): 
+        features.append(np.sin(2*np.pi*k*weeks/52))
+        features.append(np.cos(2*np.pi*k*weeks/52))
+
+    X = sm.add_constant(np.column_stack(features))
+    # target 
+    y = np.log(df_weekly["quantity"].values)
+    print(X.shape,y.shape)
+
+    model = sm.OLS(y,X).fit()
+    print(model.summary())
+    print(model.params[1],model.conf_int()[1])
 
 if __name__ =="__main__":
     main()
