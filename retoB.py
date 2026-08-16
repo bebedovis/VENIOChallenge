@@ -55,11 +55,12 @@ def simulator(model,df_week):
         quantity = int(np.exp(y[0]))
         ingreso = round(quantity*price,2)
         cost = round(quantity*last_product_cost,2)
-        total_revenue = round(ingreso-cost,2)
+        margin = round(ingreso-cost,2)
+        margin_percentage = round(margin/ingreso,4)*100
         print(f"Expected demand: {quantity} units")
         print(f"Expected ingreso: {ingreso}")
         print(f"Expected cost: {cost}")
-        print(f"Expected revenue: {total_revenue}")
+        print(f"Expected margin: {margin} {margin_percentage}%")
 
 
 def main():
