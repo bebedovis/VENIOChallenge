@@ -22,6 +22,7 @@ def aggregate_features_weekly(df):
 
     groups.loc[empty_weeks, ["quantity", "amount", "cost", "bruto"]] = np.nan
     groups["unit_price"] = groups["amount"]/groups["quantity"]
+    # Se supone que es constante
     groups["unit_cost"]= groups["cost"]/groups["quantity"]
     groups["bruto_price"] =groups["bruto"]/groups["quantity"]
     return groups.loc[full_weeks.min():full_weeks.max()]
@@ -32,10 +33,10 @@ def select_largest_variance_sku(weekly_report):
     sku = stats["var_coeff"].idxmax()
     return weekly_report.loc[sku], sku
 
-def simulator(model,df_week):
+def simulator(model,df_week,nominal_margin):
     min_price = df_week["unit_price"].min()
     max_price = df_week["unit_price"].max()
-    last_product_cost = df_week["unit_cost"][-1]
+    last_product_cost = df_week["unit_cost"].iloc[-1]
     last_week = len(df_week)
     while True:
         raw = input(f"Choose a number between {min_price:.2f} and {max_price:.2f}, press q for quiting: ")
@@ -57,10 +58,12 @@ def simulator(model,df_week):
         cost = round(quantity*last_product_cost,2)
         margin = round(ingreso-cost,2)
         margin_percentage = round(margin/ingreso,4)*100
+        markup = (price - last_product_cost) / last_product_cost 
         print(f"Expected demand: {quantity} units")
         print(f"Expected ingreso: {ingreso}")
         print(f"Expected cost: {cost}")
         print(f"Expected margin: {margin} {margin_percentage}%")
+        print(f"Markup at this price: {markup:.1%}  (SKU's nominal markup: {nominal_margin:.1%})")
 
 
 def main():
@@ -86,7 +89,8 @@ def main():
     print(model.summary())
     print("Calculated elasticity:")
     print(model.params[1],model.conf_int()[1])
-    simulator(model,df_weekly)
+    nominal_margin = df.loc[df["product_name"] == sku, "product_margin"].iloc[0]
+    simulator(model,df_weekly,nominal_margin)
 
 if __name__ =="__main__":
     main()
